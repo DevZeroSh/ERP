@@ -1,4 +1,4 @@
-const fingerPrintRout = require("./Hr/FingerPrintRout");
+// const fingerPrintRout = require("./Hr/FingerPrintRout");
 const paymentHistoryRout = require("./paymentHistoryRout");
 const brandRout = require("./brandRout");
 const categoryRout = require("./categoryRout");
@@ -135,7 +135,7 @@ const mountRoutes = (app) => {
 
   //Hr
   app.use("/api/staff", staffRout);
-  app.use("/api/finger-print", fingerPrintRout);
+  // app.use("/api/finger-print", fingerPrintRout);
   app.use("/api/salary-history", salaryHistoryRoute);
   app.use("/api/positions", positionsRout);
 
