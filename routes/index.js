@@ -66,7 +66,7 @@ const positionsRout = require("./Hr/positionsRoute");
 const efaturaRoute = require("./efatura/efaturaRoute");
 const assetCategoryRoute = require("./assetCategoryRoute");
 const finalAsset = require("./finalAssetRoute");
-const assetCardRoute = require("./AssetCardRoute");
+const assetCardRoute = require("./assetCardRoute");
 
 const mountRoutes = (app) => {
   app.use("/api/product", productRout);
