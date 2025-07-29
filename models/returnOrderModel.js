@@ -1,0 +1,126 @@
+const mongoose = require("mongoose");
+
+const returnOrderSchema = new mongoose.Schema(
+  {
+    employee: {
+      type: mongoose.Schema.ObjectId,
+      ref: "Employee",
+    },
+    invoiceName: String,
+    date: String,
+    invoicesItems: [
+      {
+        type: { type: String, default: "product" },
+        qr: String,
+        name: String,
+        category: String,
+        orginalBuyingPrice: Number,
+        profitRatio: Number,
+        convertedBuyingPrice: Number,
+        sellingPrice: Number,
+        unit: String,
+        tax: { _id: String, taxName: String, tax: Number },
+        taxValue: Number,
+        stock: {
+          _id: String,
+          stock: { type: String },
+        },
+        soldQuantity: Number,
+        totalWithoutTax: Number,
+        total: Number,
+        note: String,
+        exchangeRate: Number,
+        discountType: String,
+        discountPercentege: Number,
+        discountAmount: Number,
+        discount: Number,
+        showNote: Boolean,
+        showDiscount: Boolean,
+        buyingpriceMainCurrence: Number,
+        _id: false,
+      },
+    ],
+    financailFund: {
+      currency: String,
+      currencyID: String,
+      exchangeRate: String,
+      label: String,
+      value: String,
+      _id: false,
+    },
+    taxSummary: [
+      { taxRate: Number, totalTaxValue: Number, discountTaxValue: Number },
+    ],
+    invoiceRef: String,
+    counter: {
+      type: String,
+    },
+    customer: {
+      id: String,
+      name: String,
+      phone: String,
+      email: String,
+      address: String,
+      company: String,
+      taxAdministration: String,
+      taxNumber: String,
+      country: String,
+      city: String,
+      _id: false,
+    },
+    currency: {
+      id: String,
+      name: String,
+      currencyCode: String,
+      exchangeRate: String,
+    },
+    tag: [
+      {
+        id: String,
+        name: String,
+        color: String,
+        _id: false,
+      },
+    ],
+    currencyExchangeRate: { type: Number, default: 1 },
+    orderDate: String,
+    orderNumber: String,
+    paymentsStatus: { type: String, default: "unpiad" },
+    paymentDate: String,
+    totalInMainCurrency: Number,
+    invoiceSubTotal: Number,
+    invoiceTax: Number,
+    paymentInFundCurrency: Number,
+    invoiceGrandTotal: Number,
+    totalRemainderMainCurrency: { type: Number, default: 0 },
+    totalRemainder: { type: Number, default: 0 },
+    type: {
+      type: String,
+      default: "refund sales",
+    },
+    sync: { type: Boolean, default: false },
+    payments: [
+      {
+        payment: Number,
+        paymentMainCurrency: Number,
+        financialFunds: String,
+        financialFundsId: String,
+        financialFundsCurrencyCode: String,
+        exchangeRate: String,
+        date: String,
+        paymentID: String,
+        paymentInInvoiceCurrency: Number,
+        _id: false,
+      },
+    ],
+    companyId: {
+      type: String,
+      required: true,
+      index: true,
+    },
+  },
+
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("returnOrder", returnOrderSchema);
