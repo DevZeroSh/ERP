@@ -8,10 +8,10 @@ const {
 } = require("../services/assetCardService");
 const authService = require("../services/authService");
 
-const assetsRoute = express.Router();
-assetsRoute.use(authService.protect);
+const AssetCardRoute = express.Router();
+AssetCardRoute.use(authService.protect);
 
-assetsRoute.route("/").post(createAsset).get(getAssets);
-assetsRoute.route("/:id").put(updateAsset).get(getAsset).delete(deleteAsset);
+AssetCardRoute.route("/").post(createAsset).get(getAssets);
+AssetCardRoute.route("/:id").put(updateAsset).get(getAsset).delete(deleteAsset);
 
-module.exports = assetsRoute;
+module.exports = AssetCardRoute;

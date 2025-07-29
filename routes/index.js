@@ -135,7 +135,7 @@ const mountRoutes = (app) => {
 
   //Hr
   app.use("/api/staff", staffRout);
-  // app.use("/api/finger-print", fingerPrintRout);
+  app.use("/api/finger-print", fingerPrintRout);
   app.use("/api/salary-history", salaryHistoryRoute);
   app.use("/api/positions", positionsRout);
 
