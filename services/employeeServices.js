@@ -115,22 +115,22 @@ exports.createEmployee = asyncHandler(async (req, res, next) => {
 
       // //insert the user on the main server
 
-      if (req.body.userType && req.body.userType === "normal") {
-        try {
-          const createUserOnServer = await axios.post(
-            `${process.env.BASE_URL_FOR_SUB}:4001/api/allusers`,
-            {
-              name: req.body.companyName,
-              userEmail: req.body.email,
-              companySubscribtionId: req.body.subscribtion,
-              userType: req.body.userType,
-            }
-          );
-          //Continue here
-        } catch (error) {
-          console.log(error);
-        }
-      }
+      // if (req.body.userType && req.body.userType === "normal") {
+      //   try {
+      //     const createUserOnServer = await axios.post(
+      //       `${process.env.BASE_URL_FOR_SUB}:4001/api/allusers`,
+      //       {
+      //         name: req.body.companyName,
+      //         userEmail: req.body.email,
+      //         companySubscribtionId: req.body.subscribtion,
+      //         userType: req.body.userType,
+      //       }
+      //     );
+      //     //Continue here
+      //   } catch (error) {
+      //     console.log(error);
+      //   }
+      // }
       const employee = await employeeModel.create(req.body);
       res.status(201).json({
         status: "true",

@@ -9,7 +9,6 @@ const sharp = require("sharp");
 const { v4: uuidv4 } = require("uuid");
 const getAllChildCategories = require("../utils/CategoriesChild");
 const currencySchema = require("../models/currencyModel");
-const fetchAllSubscriberDatabases = require("../utils/fetchAllSubscriber");
 // @desc find the categors and what have a subCategor
 
 const multerStorage = multer.memoryStorage();
@@ -269,7 +268,6 @@ exports.createOffer = async (req, res) => {
 // cron.schedule("0 * * * *", async () => {
 //   console.log("Running offer status update task for all databases...");
 
-//   const subscriberDatabases = await fetchAllSubscriberDatabases();
 
 //   for (const dbName of subscriberDatabases) {
 //     await updateOfferStatusForDatabase(dbName);

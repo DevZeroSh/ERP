@@ -19,7 +19,6 @@ const SalesPointSchema = require("../models/salesPointModel");
 const AccountingTreeSchema = require("../models/accountingTreeModel");
 const journalEntrySchema = require("../models/journalEntryModel");
 const LinkPanelSchema = require("../models/linkPanelModel");
-const fetchAllSubscriberDatabases = require("../utils/fetchAllSubscriber");
 const supplierSchema = require("../models/suppliersModel");
 const invoiceHistoryModel = require("../models/invoiceHistoryModel");
 const paymentHistoryModel = require("../models/paymentHistoryModel");
@@ -1999,7 +1998,6 @@ exports.canceledOrder = asyncHandler(async (req, res, next) => {
 //   console.log("Running Marge order task for all databases...");
 
 //   // Fetch all subscriber databases
-//   const subscriberDatabases = await fetchAllSubscriberDatabases();
 //   // for (const dbName of subscriberDatabases) {
 //   // margeOrderRefundFish("noontek_gaziantep");
 //   margeOrderFish("noontek_gaziantep");
