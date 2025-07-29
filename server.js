@@ -39,7 +39,7 @@ app.use(globalError);
 //   res.sendFile(path.join(__dirname, "build", "index.html"));
 // });
 
-const PORT = 80 || 4000;
+const PORT = 8005 || 4000;
 const server = app.listen(PORT, () => {
   console.log(`app running on port ${PORT}`);
 });

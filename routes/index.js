@@ -1,4 +1,4 @@
-// const fingerPrintRout = require("./Hr/FingerPrintRout");
+const fingerPrintRout = require("./Hr/FingerPrintRout");
 const paymentHistoryRout = require("./paymentHistoryRout");
 const brandRout = require("./brandRout");
 const categoryRout = require("./categoryRout");

@@ -4,6 +4,5 @@
 /uploads
 services/test.js
 services/facebookAuth.js
-services/authService.js
-routes/authRoute.js
-routes/authRoute.js
+
+

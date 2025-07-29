@@ -10,14 +10,14 @@ const {
   getLoggedUserFingerPrint,
 } = require("../../services/Hr/fingerPrintServices");
 
-const fingerPrintRout = express.Router();
-fingerPrintRout.use(authService.protect);
+const FingerPrintRout = express.Router();
+FingerPrintRout.use(authService.protect);
 
-fingerPrintRout.route("/loged").get(getLoggedUserFingerPrint)
-fingerPrintRout.route("/").get(getFingerPrint).post(createFingerPrint);
-fingerPrintRout
+FingerPrintRout.route("/loged").get(getLoggedUserFingerPrint)
+FingerPrintRout.route("/").get(getFingerPrint).post(createFingerPrint);
+FingerPrintRout
   .route("/:id")
   .get(getOneFingerPrint)
   .delete(deleteFingerprint)
   .put(updateFingerPrint);
-module.exports = fingerPrintRout;
+module.exports = FingerPrintRout;
