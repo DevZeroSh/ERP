@@ -112,7 +112,6 @@ exports.protect = asyncHandler(async (req, res, next) => {
           $elemMatch: { companyId: companyId },
         },
       });
-      console.log(decoded);
 
       if (!curentUser) {
         return next(new ApiError("The user does not exit", 404));
