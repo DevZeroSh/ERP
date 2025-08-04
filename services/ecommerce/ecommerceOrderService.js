@@ -325,20 +325,14 @@ exports.findAllOrderforCustomer = asyncHandler(async (req, res, next) => {
 
 exports.findAllOrders = asyncHandler(async (req, res, next) => {
   const companyId = req.query.companyId;
+  if (!companyId) return res.status(400).json({ message: "companyId is required" });
 
-  if (!companyId) {
-    return res.status(400).json({ message: "companyId is required" });
-  }
-
-  // Pagination parameters
   const pageSize = parseInt(req.query.limit, 10) || 25;
   const page = parseInt(req.query.page, 10) || 1;
   const skip = (page - 1) * pageSize;
 
-  // Initialize pipeline
   const pipeline = [{ $match: { companyId } }];
 
-  // Keyword search
   const keyword = req.query.keyword?.replace(/\s+/g, ".*");
   if (keyword) {
     const keywordRegex = new RegExp(keyword, "i");
@@ -375,43 +369,56 @@ exports.findAllOrders = asyncHandler(async (req, res, next) => {
     );
   }
 
-  // Order status filter
   if (req.query.orderType) {
+    const isProgress = req.query.orderType === "progress";
     pipeline.push({
       $match: {
-        $expr:
-          req.query.orderType === "progress"
-            ? { $gt: [{ $size: { $setUnion: ["$cartItems.orderStatus"] } }, 1] }
-            : {
-                $eq: [
-                  { $size: "$cartItems" },
-                  {
-                    $size: {
-                      $filter: {
-                        input: "$cartItems",
-                        cond: {
-                          $eq: ["$$this.orderStatus", req.query.orderType],
+        $expr: isProgress
+          ? {
+              $gt: [
+                {
+                  $size: {
+                    $setUnion: [
+                      {
+                        $map: {
+                          input: { $ifNull: ["$cartItems", []] },
+                          as: "item",
+                          in: "$$item.orderStatus",
                         },
+                      },
+                    ],
+                  },
+                },
+                1,
+              ],
+            }
+          : {
+              $eq: [
+                { $size: { $ifNull: ["$cartItems", []] } },
+                {
+                  $size: {
+                    $filter: {
+                      input: { $ifNull: ["$cartItems", []] },
+                      cond: {
+                        $eq: ["$$this.orderStatus", req.query.orderType],
                       },
                     },
                   },
-                ],
-              },
+                },
+              ],
+            },
       },
     });
   }
 
-  // Get total count
   const countPipeline = [...pipeline, { $count: "total" }];
   const countResult = await ecommerceOrderModel.aggregate(countPipeline).exec();
   const totalItems = countResult[0]?.total || 0;
 
-  // Sorting logic
   const sortQuery = req.query.sold
     ? { totalOrderPrice: parseInt(req.query.sold, 10) === 1 ? 1 : -1 }
     : { createdAt: -1 };
 
-  // Main pipeline with sorting, pagination, and lookups
   pipeline.push(
     { $sort: sortQuery },
     { $skip: skip },
@@ -463,14 +470,13 @@ exports.findAllOrders = asyncHandler(async (req, res, next) => {
     { $unwind: { path: "$customar", preserveNullAndEmptyArrays: true } }
   );
 
-  // Status count pipeline
   const buildStatusStage = (status) => ({
     $eq: [
-      { $size: "$cartItems" },
+      { $size: { $ifNull: ["$cartItems", []] } },
       {
         $size: {
           $filter: {
-            input: "$cartItems",
+            input: { $ifNull: ["$cartItems", []] },
             cond: { $eq: ["$$this.orderStatus", status] },
           },
         },
@@ -491,14 +497,8 @@ exports.findAllOrders = asyncHandler(async (req, res, next) => {
               { case: buildStatusStage("shipped"), then: "shipped" },
               { case: buildStatusStage("cancelled"), then: "cancelled" },
               { case: buildStatusStage("returned"), then: "returned" },
-              {
-                case: buildStatusStage("cancelrequest"),
-                then: "cancelrequest",
-              },
-              {
-                case: buildStatusStage("returnrequest"),
-                then: "returnrequest",
-              },
+              { case: buildStatusStage("cancelrequest"), then: "cancelrequest" },
+              { case: buildStatusStage("returnrequest"), then: "returnrequest" },
               { case: buildStatusStage("approved"), then: "approved" },
             ],
             default: "progress",
@@ -528,14 +528,12 @@ exports.findAllOrders = asyncHandler(async (req, res, next) => {
     },
   ];
 
-  // Execute aggregations
   const [orders, [statusCounts = { totalCounts: [], todayCounts: [] }]] =
     await Promise.all([
       orderModel.aggregate(pipeline).exec(),
       orderModel.aggregate(statusCountPipeline).exec(),
     ]);
 
-  // Format status counts
   const formatCounts = (source) => (status) =>
     source.find((s) => s._id === status)?.count || 0;
   const getTotal = formatCounts(statusCounts.totalCounts);
@@ -568,7 +566,6 @@ exports.findAllOrders = asyncHandler(async (req, res, next) => {
       getTotal("progress"),
   };
 
-  // Return response
   res.status(200).json({
     status: "success",
     results: orders.length,
