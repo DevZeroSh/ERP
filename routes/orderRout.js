@@ -9,6 +9,7 @@ const {
   editOrderInvoice,
   canceledOrder,
   findCustomer,
+  mergeReceipts,
 } = require("../services/orderServices");
 
 const authService = require("../services/authService");
@@ -26,7 +27,7 @@ OrderRout.route("/customerorder/:id").get(authService.protect, findCustomer);
 OrderRout.route("/").get(authService.protect, findAllOrder);
 
 OrderRout.route("/salesDashbord").post(authService.protect, DashBordSalse);
-
+OrderRout.route("/merge").post(authService.protect, mergeReceipts);
 OrderRout.route("/:id")
   .get(findOneOrder)
   .put(authService.protect, editOrderInvoice)

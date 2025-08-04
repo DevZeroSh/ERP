@@ -143,6 +143,7 @@ const orderFishSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    merged: { type: Boolean, default: false },
   },
 
   { timestamps: true }

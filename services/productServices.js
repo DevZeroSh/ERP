@@ -20,6 +20,7 @@ const getAllChildCategories = require("../utils/CategoriesChild");
 
 const { getParasutOneProduct } = require("./parasut/parasutServices");
 const productMovementModel = require("../models/productMovementModel");
+const orderModel = require("../models/orderModel");
 
 // @desc Get list product
 // @route Get /api/product
@@ -787,9 +788,11 @@ exports.getOneProduct = asyncHandler(async (req, res, next) => {
 // @route put /api/ecommersproduct
 // @access private
 exports.updateEcommerceProducts = async (req, res, next) => {
-  const dbName = req.query.databaseName;
-  const db = mongoose.connection.useDb(dbName);
-  const productModel = db.model("Product", productSchema);
+  const companyId = req.query.companyId;
+
+  if (!companyId) {
+    return res.status(400).json({ message: "companyId is required" });
+  }
 
   try {
     const productIds = Array.isArray(req.body.productId)
@@ -1857,76 +1860,67 @@ exports.updateAllForNahed = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "companyId is required" });
   }
 
-  try {
-    const { buffer } = req.file;
-    let csvData;
+  const { buffer } = req.file;
+  let csvData;
 
-    if (
-      req.file.originalname.endsWith(".csv") ||
-      req.file.mimetype === "text/csv"
-    ) {
-      csvData = await csvtojson().fromString(buffer.toString());
-    } else if (
-      req.file.originalname.endsWith(".xlsx") ||
-      req.file.mimetype ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    ) {
-      const workbook = xlsx.read(buffer, { type: "buffer" });
-      const sheet_name_list = workbook.SheetNames;
-      csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
-    } else {
-      return res.status(400).json({ error: "Unsupported file type" });
-    }
-
-    // Sort or process products to ensure consistent productNo assignment
-    let productCounter = 1;
-
-    // Keep track of updated QRs to avoid duplicates
-    const updatedQRs = new Set();
-
-    for (const item of csvData) {
-      if (!item.qr || updatedQRs.has(item.qr)) continue;
-      updatedQRs.add(item.qr);
-
-      let basePrice = parseFloat(item.price);
-      let baseBuyingPrice = parseFloat(item.buyingprice);
-      let tax = parseFloat(item.tax);
-
-      if (isNaN(basePrice) || basePrice <= 0) basePrice = 1;
-      if (isNaN(baseBuyingPrice) || baseBuyingPrice <= 0) baseBuyingPrice = 1;
-      if (isNaN(tax) || tax < 0) tax = 0;
-
-      const priceWithTax = basePrice * (1 + tax / 100);
-      const buyingPriceWithTax = baseBuyingPrice * (1 + tax / 100);
-
-      const profitRatio =
-        priceWithTax === 0
-          ? 0
-          : ((priceWithTax - buyingPriceWithTax) / priceWithTax) * 100;
-
-      await productModel.findOneAndUpdate(
-        { qr: item.qr, companyId },
-        {
-          productNo: productCounter,
-          buyingprice: buyingPriceWithTax,
-          price: basePrice,
-          taxPrice: priceWithTax,
-          ecommercePrice: priceWithTax,
-          ecommercePriceMainCurrency: priceWithTax,
-          profitRatio: profitRatio,
-        },
-        { new: true }
-      );
-
-      productCounter++;
-    }
-    console.log(`productCounter`, productCounter);
-    res.json({ success: "Products updated successfully." });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: "Internal Server Error",
-      details: error.message,
-    });
+  if (
+    req.file.originalname.endsWith(".csv") ||
+    req.file.mimetype === "text/csv"
+  ) {
+    csvData = await csvtojson().fromString(buffer.toString());
+  } else if (
+    req.file.originalname.endsWith(".xlsx") ||
+    req.file.mimetype ===
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+  ) {
+    const workbook = xlsx.read(buffer, { type: "buffer" });
+    const sheet_name_list = workbook.SheetNames;
+    csvData = xlsx.utils.sheet_to_json(workbook.Sheets[sheet_name_list[0]]);
+  } else {
+    return res.status(400).json({ error: "Unsupported file type" });
   }
+
+  // Sort or process products to ensure consistent productNo assignment
+  let productCounter = 1;
+
+  // Keep track of updated QRs to avoid duplicates
+  const updatedQRs = new Set();
+
+  for (const item of csvData) {
+    if (!item.qr || updatedQRs.has(item.qr)) continue;
+    updatedQRs.add(item.qr);
+
+    let basePrice = parseFloat(item.price);
+    let baseBuyingPrice = parseFloat(item.buyingprice);
+    let tax = parseFloat(item.tax);
+
+    if (isNaN(basePrice) || basePrice <= 0) basePrice = 1;
+    if (isNaN(baseBuyingPrice) || baseBuyingPrice <= 0) baseBuyingPrice = 1;
+    if (isNaN(tax) || tax < 0) tax = 0;
+
+    const priceWithTax = basePrice * (1 + tax / 100);
+    const buyingPriceWithTax = baseBuyingPrice * (1 + tax / 100);
+
+    const profitRatio =
+      priceWithTax === 0
+        ? 0
+        : ((priceWithTax - buyingPriceWithTax) / priceWithTax) * 100;
+
+    await productModel.findOneAndUpdate(
+      { qr: item.qr, companyId },
+      {
+        productNo: productCounter,
+        buyingprice: buyingPriceWithTax,
+        price: basePrice,
+        taxPrice: priceWithTax,
+        ecommercePrice: priceWithTax,
+        ecommercePriceMainCurrency: priceWithTax,
+        profitRatio: profitRatio,
+      },
+      { new: true }
+    );
+
+    productCounter++;
+  }
+  res.json({ success: "Products updated successfully." });
 });

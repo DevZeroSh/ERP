@@ -17,7 +17,7 @@ exports.checkIdIfUsed = async (id, exceptionalCollections, fields, db) => {
 
             const document = await collectionModel.findOne({ $or: [query] });
             if (document) {
-                console.log(true); // Currency ID is found in another collection
+                console.log(true);
             } else {
                 console.log(false);
             }

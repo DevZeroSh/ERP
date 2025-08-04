@@ -1024,17 +1024,33 @@ exports.createCompanyInfo = asyncHandler(async (req, res, next) => {
     superAdmin: true,
     companyId: companyInfo._id,
   });
-
-  const employeePass = generatePassword();
-  const hashedPassword = await bcrypt.hash(employeePass, 12);
   req.body.name = req.body.companyName;
-  req.body.password = hashedPassword;
   req.body.company = {
     companyId: companyInfo._id,
     selectedRoles: insertMainRole._id,
     companyName: req.body.companyName,
   };
-  const employee = await employeeModel.create(req.body);
+  const oldEmail = await employeeModel.findOne({ email: req.body.email });
+  if (!oldEmail) {
+    const employeePass = generatePassword();
+    const hashedPassword = await bcrypt.hash(employeePass, 12);
+    req.body.password = hashedPassword;
+    const employee = await employeeModel.create(req.body);
+  } else {
+    await employeeModel.findOneAndUpdate(
+      { email: req.body.email },
+      {
+        $push: {
+          company: {
+            companyId: companyInfo._id,
+            selectedRoles: insertMainRole._id,
+            companyName: req.body.companyName,
+          },
+        },
+      }
+    );
+  }
+
   //5-insert the main currency
   await currencyModel.create({
     currencyCode: req.body.currencyCode,

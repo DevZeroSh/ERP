@@ -187,7 +187,7 @@ const orderSchema = new mongoose.Schema(
       default: "sales",
     },
 
-    fish: [String],
+    receipts: [String],
     counter: String,
     totalRemainderMainCurrency: { type: Number, default: 0 },
     totalRemainder: { type: Number, default: 0 },
