@@ -281,7 +281,9 @@ exports.transfer = asyncHandler(async (req, res, next) => {
   if (!companyId) {
     return res.status(400).json({ message: "companyId is required" });
   }
- const padZero = (value) => (value < 10 ? `0${value}` : value);
+  function padZero(value) {
+    return value < 10 ? `0${value}` : value;
+  }
   const ts = Date.now();
   const date_ob = new Date(ts);
   const formattedDate = `${padZero(date_ob.getHours())}:${padZero(
@@ -303,7 +305,7 @@ exports.transfer = asyncHandler(async (req, res, next) => {
   const dateAndTime = `${req.body.date}T${formattedDate}Z`;
   req.body.date = dateAndTime;
   // 1) Take the first Fund
-  const financialFund = await FinancialFundsModel.findOneAndUpdate({
+  const financialFund = await FinancialFundsModel.findOne({
     _id: id,
     companyId,
   });
@@ -315,7 +317,7 @@ exports.transfer = asyncHandler(async (req, res, next) => {
   financialFund.fundBalance -= after;
 
   // 3) Find the fund to which the money will go
-  const funds = await FinancialFundsModel.findOneAndUpdate({
+  const funds = await FinancialFundsModel.findOne({
     _id: fund,
     companyId,
   });
