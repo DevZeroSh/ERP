@@ -281,7 +281,7 @@ exports.transfer = asyncHandler(async (req, res, next) => {
   if (!companyId) {
     return res.status(400).json({ message: "companyId is required" });
   }
-
+ const padZero = (value) => (value < 10 ? `0${value}` : value);
   const ts = Date.now();
   const date_ob = new Date(ts);
   const formattedDate = `${padZero(date_ob.getHours())}:${padZero(
