@@ -63,7 +63,7 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
     { new: true }
   );
   if (req.body.customarId) {
-    nextCounter = (await orderModel.countDocuments()) + 1;
+    nextCounter = (await orderModel.countDocuments({companyId})) + 1;
     req.body.counter = nextCounter;
     const customers = await customersModel.findOneAndUpdate(
       { _id: req.body.customarId, companyId },
