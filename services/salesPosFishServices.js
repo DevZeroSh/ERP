@@ -19,6 +19,8 @@ const paymentModel = require("../models/paymentModel");
 const createJournalForPos = require("../utils/creaeteJornalForPos");
 const stockSchema = require("../models/stockModel");
 const reportsFinancialFunds = require("../models/reportsFinancialFunds");
+const salesPointModel = require("../models/salesPointModel");
+const returnOrderModel = require("../models/returnOrderModel");
 
 // @desc    Create cash order from the POS page
 // @route   POST /api/salse-pos
@@ -30,6 +32,7 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
     return res.status(400).json({ message: "companyId is required" });
   }
   req.body.companyId = companyId;
+  req.body.employee = req.user.name;
   const padZero = (value) => (value < 10 ? `0${value}` : value);
   const ts = Date.now();
   const date_ob = new Date(ts);
@@ -63,7 +66,7 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
     { new: true }
   );
   if (req.body.customarId) {
-    nextCounter = (await orderModel.countDocuments({companyId})) + 1;
+    nextCounter = (await orderModel.countDocuments({ companyId })) + 1;
     req.body.counter = nextCounter;
     const customers = await customersModel.findOneAndUpdate(
       { _id: req.body.customarId, companyId },
@@ -761,12 +764,12 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
     return res.status(400).json({ message: "companyId is required" });
   }
   req.body.companyId = companyId;
-  const financialFundsId = req.body.financailFund.id;
+  const financialFundsId = req.body.financialFund.id;
   const financialFunds = await FinancialFundsModel.findOne({
     _id: financialFundsId,
   });
   const orderId = req.body.orderId;
-  const orders = await posReceiptsModel.findOne({ _id: orderId });
+  const orders = await posReceiptsModel.findOne({ _id: orderId, companyId });
 
   // Helper function to pad zero
   const padZero = (value) => (value < 10 ? `0${value}` : value);
@@ -785,10 +788,10 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
   const nextCounterRefund =
     (await refundPosSales.countDocuments({ companyId })) + 1;
   req.body.counter = nextCounterRefund;
-  // try {
+
   const order = await refundPosSales.create(req.body);
 
-  const bulkUpdateOptions = req.body.invoicesItems.map((item) => ({
+  const bulkUpdateOptions = req.body.cartItems.map((item) => ({
     updateOne: {
       filter: { qr: item.qr, "stocks.stockId": item.stock._id, companyId },
       update: {
@@ -818,7 +821,7 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
     companyId,
   });
 
-  const returnCartItemUpdates = req.body.invoicesItems
+  const returnCartItemUpdates = req.body.cartItems
     .map((incomingItem) => {
       const matchingIndex = orders.returnCartItem.findIndex(
         (item) => item.qr === incomingItem.qr
@@ -849,7 +852,7 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
 
   const movementMap = new Map();
   const originalItems = orders.cartItems;
-  req.body.invoicesItems.forEach((item, index) => {
+  req.body.cartItems.forEach((item, index) => {
     if (item.type === "unTracedproduct" || item.type === "expense") return;
 
     const diff = item.soldQuantity - originalItems[index].soldQuantity;
@@ -977,8 +980,10 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
   if (!companyId) {
     return res.status(400).json({ message: "companyId is required" });
   }
-
-  const currentDateTime = new Date();
+  req.body.employee = req.user.name;
+  const currentDateTime = new Date().toLocaleString("en-US", {
+    timeZone: "Europe/Istanbul",
+  });
 
   const { id } = req.params;
   const { stockId } = req.body;
@@ -995,7 +1000,7 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
         await financialFund.save();
 
         await ReportsFinancialFundsModel.create({
-          date: currentDateTime.toISOString(),
+          date: currentDateTime,
           amount: fundId.allocatedAmount,
           ref: canceled._id,
           type: "cancel",
@@ -1040,7 +1045,7 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
       { _id: id, companyId },
       {
         type: "cancel",
-        date: currentDateTime.toISOString(),
+        date: currentDateTime,
         counter: "cancel " + canceled.counter,
       },
       { new: true }
@@ -1051,7 +1056,7 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
       id,
       "cancel",
       req.user._id,
-      new Date().toISOString()
+      currentDateTime
     );
     res.status(200).json({
       status: "success",
@@ -1086,5 +1091,160 @@ exports.getReceiptForDate = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     data: orders,
+  });
+});
+
+exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
+  const companyId = req.query.companyId;
+  const { startDate, endDate, id } = req.body;
+  req.body.employee = req.user.name;
+  if (!companyId) {
+    return res.status(400).json({ message: "companyId is required" });
+  }
+  const nextCounter =
+    (await returnOrderModel.countDocuments({ companyId })) + 1;
+  const salesPoints = await salesPointModel
+    .findOne({ _id: id, companyId })
+    .populate("salesPointCurrency");
+
+  const receipts = await refundPosSales.find({
+    createdAt: {
+      $gte: new Date(`${startDate}T00:00:00.000Z`),
+      $lte: new Date(`${endDate}T23:59:59.999Z`),
+    },
+    type: "Refund Pos",
+    companyId,
+  });
+
+  const cartItems = [];
+  const fish = [];
+  const taxSummaryMap = new Map();
+  const financialFundsMap = new Map();
+  let totalInMainCurrency = 0,
+    invoiceGrandTotal = 0,
+    invoiceSubTotal = 0,
+    invoiceTax = 0;
+  for (const order of receipts) {
+    for (const item of order.cartItems) {
+      cartItems.push({
+        qr: item.qr,
+        name: item.name,
+        sellingPrice: item.sellingPrice,
+        soldQuantity: item.soldQuantity,
+        orginalBuyingPrice: item.orginalBuyingPrice,
+        convertedBuyingPrice: item.convertedBuyingPrice || 0,
+        total: item.total,
+        totalWithoutTax: item.totalWithoutTax,
+        unit: item.unit,
+        tax: {
+          _id: item.tax._id,
+          tax: item.tax.tax,
+          name: item.tax.name,
+          salesAccountTax: item.tax.salesAccountTax,
+        },
+        discountAmount: item.discountAmount,
+        discountPercentege: item.discountPercentege,
+        taxValue: item.taxValue,
+      });
+
+      fish.push(order.counter);
+    }
+    totalInMainCurrency += order.totalInMainCurrency;
+    invoiceGrandTotal += order.invoiceGrandTotal;
+    invoiceSubTotal += order.invoiceSubTotal;
+    invoiceTax += order.invoiceTax;
+
+    if (order.taxSummary) {
+      for (const item of order.taxSummary) {
+        try {
+          if (taxSummaryMap.has(item.taxId)) {
+            const taxData = taxSummaryMap.get(item.taxId);
+            taxData.totalTaxValue += item.totalTaxValue || 0;
+            taxData.discountTaxValue += item.discountTaxValue || 0;
+          } else {
+            taxSummaryMap.set(item.taxId, {
+              taxId: item.taxId,
+              taxRate: item.taxRate,
+              totalTaxValue: item.totalTaxValue || 0,
+              discountTaxValue: item.discountTaxValue || 0,
+              salesAccountTax: item.salesAccountTax,
+            });
+          }
+        } catch (err) {
+          console.error("Error processing tax summary item:", err);
+        }
+      }
+    }
+    if (order.financialFund) {
+      for (const item of order.financialFund) {
+        try {
+          if (financialFundsMap.has(item.fundId)) {
+            const fundData = financialFundsMap.get(item.fundId);
+            fundData.allocatedAmount += item.allocatedAmount || 0;
+          } else {
+            financialFundsMap.set(item.id, {
+              id: item.fundId,
+              name: item.fundName,
+              currencyCode: item.currencyCode || 0,
+              exchangeRate: item.exchangeRate || 0,
+              currency: item.currency,
+              currencyID: item.currencyID,
+              allocatedAmount: item.allocatedAmount,
+            });
+          }
+        } catch (err) {
+          console.error("Error processing tax summary item:", err);
+        }
+      }
+    }
+  }
+
+  function padZero(value) {
+    return value < 10 ? `0${value}` : value;
+  }
+  const ts = Date.now();
+  const date_ob = new Date(ts);
+
+  const date = `${date_ob.getFullYear()}-${padZero(
+    date_ob.getMonth() + 1
+  )}-${padZero(date_ob.getDate())}T${padZero(date_ob.getHours())}:${padZero(
+    date_ob.getMinutes()
+  )}:${padZero(date_ob.getSeconds())}`;
+
+  const aggregatedFunds = Array.from(financialFundsMap.values());
+  const taxSummary = Array.from(taxSummaryMap.values());
+
+  const newOrderData = {
+    invoicesItems: cartItems,
+    invoiceGrandTotal: invoiceGrandTotal,
+    orderDate: date,
+    type: "bills",
+    totalInMainCurrency: totalInMainCurrency,
+    counter: nextCounter,
+    paymentsStatus: "paid",
+    currency: {
+      id: salesPoints.salesPointCurrency._id,
+      currencyCode: salesPoints.salesPointCurrency.currencyCode,
+      exchangeRate: salesPoints.salesPointCurrency.exchangeRate,
+      currencyAbbr: salesPoints.salesPointCurrency.currencyAbbr,
+      currencyName: salesPoints.salesPointCurrency.currencyName,
+    },
+    exchangeRate: 1,
+    receipts: fish,
+    financailFund: aggregatedFunds,
+    manuallInvoiceDiscountValue: 0,
+    manuallInvoiceDiscount: 0,
+    taxSummary: taxSummary,
+    invoiceSubTotal: invoiceSubTotal,
+    invoiceTax: invoiceTax,
+    discountType: "value",
+    companyId,
+  };
+  const sales = await returnOrderModel.create(newOrderData);
+
+  res.status(201).json({
+    status: "success",
+    message: "All receipts merged successfully",
+    data: sales,
   });
 });

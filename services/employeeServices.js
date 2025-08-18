@@ -14,6 +14,8 @@ const createToken = require("../utils/createToken");
 const multer = require("multer");
 const { v4: uuidv4 } = require("uuid");
 const sharp = require("sharp");
+const CompanyInfnoModel = require("../models/companyInfoModel");
+
 const multerStorage = multer.memoryStorage();
 
 const multerFilter = function (req, file, cb) {
@@ -98,48 +100,62 @@ exports.createEmployee = asyncHandler(async (req, res, next) => {
     return res.status(400).json({ message: "companyId is required" });
   }
   req.body.companyId = companyId;
-
+  const findEmployee = await findOne({ email });
+  let employee;
   //Check if the email format is true or not
   if (isEmail(email)) {
-    try {
-      //Generate Password
-      // const employeePass = generatePassword();
-      // req.body.password = employeePass;
-      //Sned password to email
+    //Generate Password
+    const employeePass = generatePassword();
+    const company = await CompanyInfnoModel.findOne({ companyId });
+    req.body.tags = JSON.parse(req.body.tags);
+    req.body.stocks = JSON.parse(req.body.stocks);
+    req.body.expenseTags = JSON.parse(req.body.expenseTags);
+    req.body.purchaseTags = JSON.parse(req.body.purchaseTags);
+    req.body.salesTags = JSON.parse(req.body.salesTags);
+
+    //Sned password to email
+    if (!findEmployee) {
+      req.body.password = await bcrypt.hash(employeePass, 12);
       await sendEmail({
         email: req.body.email,
         subject: "New Password",
-        message: `Hello ${req.body.name}, Your password is`,
+        message: `Hello ${req.body.name}, Your password is ${employeePass}`,
       });
-      //Create the employee
-
-      // //insert the user on the main server
-
-      // if (req.body.userType && req.body.userType === "normal") {
-      //   try {
-      //     const createUserOnServer = await axios.post(
-      //       `${process.env.BASE_URL_FOR_SUB}:4001/api/allusers`,
-      //       {
-      //         name: req.body.companyName,
-      //         userEmail: req.body.email,
-      //         companySubscribtionId: req.body.subscribtion,
-      //         userType: req.body.userType,
-      //       }
-      //     );
-      //     //Continue here
-      //   } catch (error) {
-      //     console.log(error);
-      //   }
-      // }
-      const employee = await employeeModel.create(req.body);
-      res.status(201).json({
-        status: "true",
-        message: "Employee Inserted",
-        data: employee,
-      });
-    } catch (error) {
-      return next(new ApiError("There is an error in sending email", 500));
+    } else {
+      req.body.company = [
+        {
+          companyId: companyId,
+          selectedRoles: req.body.selectedRoles,
+          companyName: company.companyName,
+        },
+      ];
+      employee = await employeeModel.create(req.body);
     }
+    //Create the employee
+
+    // //insert the user on the main server
+
+    // if (req.body.userType && req.body.userType === "normal") {
+    //   try {
+    //     const createUserOnServer = await axios.post(
+    //       `${process.env.BASE_URL_FOR_SUB}:4001/api/allusers`,
+    //       {
+    //         name: req.body.companyName,
+    //         userEmail: req.body.email,
+    //         companySubscribtionId: req.body.subscribtion,
+    //         userType: req.body.userType,
+    //       }
+    //     );
+    //     //Continue here
+    //   } catch (error) {
+    //     console.log(error);
+    //   }
+    // }
+    res.status(201).json({
+      status: "true",
+      message: "Employee Inserted",
+      data: employee,
+    });
   } else {
     return next(new ApiError("There is an error in email format", 500));
   }

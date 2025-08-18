@@ -3,10 +3,8 @@ const mongoose = require("mongoose");
 const orderSchema = new mongoose.Schema(
   {
     invoiceName: String,
-    employee: {
-      type: mongoose.Schema.ObjectId,
-      ref: "Employee",
-    },
+    employee: String,
+
     financailFund: [
       {
         currency: String,

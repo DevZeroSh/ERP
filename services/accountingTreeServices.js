@@ -215,14 +215,14 @@ exports.importAccountingTree = asyncHandler(async (req, res, next) => {
     // Find IDs for currency, category, unit, and brand
     const currency = await currencySchema.findOne({
       companyId,
-      currencyCode: item.currency,
+      currencyName: item.currency,
     });
     item.currency = currency?._id;
     item.companyId = companyId;
   }
   try {
     console.log(csvData);
-    
+
     // Insert Tree into the database
     const insertedTree = await AccountingTree.insertMany(csvData, {
       ordered: false,

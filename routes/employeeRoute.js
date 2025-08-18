@@ -26,7 +26,7 @@ const employeeRoute = express.Router();
 employeeRoute
   .route("/")
   .get(getEmployees)
-  .post(uploadEmployeeImage, resizerEmployeeImage, createEmployeeInPos);
+  .post(uploadEmployeeImage, resizerEmployeeImage, createEmployee);
 employeeRoute.route("/resendpassword/:email").put(authService.protect, reSendPassword);
 employeeRoute.route("/create-employee").post(createEmployee);
 
