@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const refundPosSalesSchema = new mongoose.Schema(
   {
     employee: String,
-    financialFund: [
+    financailFund: [
       {
         currency: String,
         currencyID: String,

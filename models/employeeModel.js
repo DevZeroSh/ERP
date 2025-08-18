@@ -76,6 +76,7 @@ const emoloyeeShcema = new mongoose.Schema(
     stocks: [{ stockId: String, stockName: String, _id: false }],
     sync: { type: Boolean, default: false },
     image: String,
+    selectedQuickActions: { type: [String], default: [] },
     company: [
       {
         companyId: String,
