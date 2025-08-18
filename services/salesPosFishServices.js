@@ -1175,8 +1175,8 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
         }
       }
     }
-    if (order.financialFund) {
-      for (const item of order.financialFund) {
+    if (order.financailFund) {
+      for (const item of order.financailFund) {
         try {
           if (financialFundsMap.has(item.fundId)) {
             const fundData = financialFundsMap.get(item.fundId);

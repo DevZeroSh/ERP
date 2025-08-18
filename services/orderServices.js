@@ -1498,7 +1498,7 @@ exports.mergeReceipts = asyncHandler(async (req, res, next) => {
             const fundData = financialFundsMap.get(item.fundId);
             fundData.allocatedAmount += item.allocatedAmount || 0;
           } else {
-            financialFundsMap.set(item.id, {
+            financialFundsMap.set(item.fundId, {
               id: item.fundId,
               name: item.fundName,
               currencyCode: item.currencyCode || 0,

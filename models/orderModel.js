@@ -113,9 +113,11 @@ const orderSchema = new mongoose.Schema(
     ],
     taxSummary: [
       {
+        taxId: String,
         taxRate: Number,
         totalTaxValue: Number,
         discountTaxValue: Number,
+        salesAccountTax: String,
         _id: false,
       },
     ],
