@@ -811,7 +811,7 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
   await reportsFinancialFunds.create({
     date: req.body.paidAt,
     amount: req.body.paymentInFundCurrency,
-    order: order._id,
+    ref: order._id,
     type: "refund-POS-Receipts",
     financialFundId: financialFundsId,
     financialFundRest: financialFunds.fundBalance,
