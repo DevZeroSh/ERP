@@ -3,12 +3,13 @@ const mongoose = require("mongoose");
 const orderSchema = require("../../models/orderModel");
 const { default: axios } = require("axios");
 const { createInvoiceHistory } = require("../invoiceHistoryService");
+const orderModel = require("../../models/orderModel");
 
 // Create E-Fatura
 exports.createEFatura = asyncHandler(async (req, res, next) => {
   const url = process.env.efatura_test_v1;
   const urlV2 = process.env.efatura_test_v2;
-  const token = process.env.efatura_token;
+  const { apiKey } = req?.body;
 
   const orderNumber = req.body?.orderInfoModel?.orderNumber;
   const { type } = req.params;
@@ -32,14 +33,16 @@ exports.createEFatura = asyncHandler(async (req, res, next) => {
       {
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": token,
+          "x-api-key": apiKey,
         },
       }
     );
+    const companyId = req.query.companyId;
 
-    const dbName = req.query.databaseName;
-    const db = mongoose.connection.useDb(dbName);
-    const orderModel = db.model("Sales", orderSchema);
+    if (!companyId) {
+      return res.status(400).json({ message: "companyId is required" });
+    }
+
     const timeIsoString = new Date().toISOString();
 
     await orderModel.findByIdAndUpdate(
@@ -53,24 +56,24 @@ exports.createEFatura = asyncHandler(async (req, res, next) => {
     );
 
     createInvoiceHistory(
-      dbName,
+      companyId,
       orderNumber,
       "edit",
-      req.user._id,
-      req.body.orderInfoModel?.orderDate || timeIsoString
+      req.user?._id,
+      req.body?.orderInfoModel?.orderDate || timeIsoString
     );
 
     return res.status(201).json({
       status: "success",
       message: "SUCCESS",
-      data: response.data,
+      data: response?.data,
     });
   } catch (error) {
-    console.error("E-Fatura Error Response:", error.response.data);
+    console.error("E-Fatura Error Response:", error?.response?.data || error);
     return res.status(500).json({
       status: "error",
       message: "E-Fatura request failed",
-      details: error.response.data,
+      details: error?.response?.data,
     });
   }
 });

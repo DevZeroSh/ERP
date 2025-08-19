@@ -9,6 +9,7 @@ const companyIfnoSchema = new mongoose.Schema({
   companyTax: String,
   companyEmail: String,
   companyTel: String,
+  turkcellApiKey: String,
   companyLogo: {
     type: String,
     default: `defaultLogo.png`,
