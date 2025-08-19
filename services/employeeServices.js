@@ -60,7 +60,11 @@ exports.getEmployees = asyncHandler(async (req, res) => {
     const pageSize = parseInt(req.query.limit) || 10;
     const page = parseInt(req.query.page) || 1;
     const skip = (page - 1) * pageSize;
-    let query = { companyId };
+    let query = {
+      company: {
+        $elemMatch: { companyId },
+      },
+    };
     if (req.query.keyword) {
       query.$or = [
         { email: { $regex: req.query.keyword, $options: "i" } },
