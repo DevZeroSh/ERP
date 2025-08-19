@@ -2,13 +2,8 @@ const asyncHandler = require("express-async-handler");
 const ApiError = require("../utils/apiError");
 const supplierModel = require("../models/suppliersModel");
 
-const {
-  createPaymentHistory,
-} = require("./paymentHistoryService");
-const PurchaseInvoicesSchema = require("../models/purchaseinvoicesModel");
-const emoloyeeShcema = require("../models/employeeModel");
-const { Search } = require("../utils/search");
-const AccountingTreeSchema = require("../models/accountingTreeModel");
+const { createPaymentHistory } = require("./paymentHistoryService");
+
 const PaymentHistoryModel = require("../models/paymentHistoryModel");
 
 //Create New Supplier

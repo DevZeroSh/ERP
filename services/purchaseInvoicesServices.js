@@ -1,10 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const ApiError = require("../utils/apiError");
 const PurchaseInvoicesModel = require("../models/purchaseinvoicesModel");
-const mongoose = require("mongoose");
 const suppliersModel = require("../models/suppliersModel");
-const employeeModel = require("../models/employeeModel");
-const currencyModel = require("../models/currencyModel");
 const financialFundsModel = require("../models/financialFundsModel");
 const productModel = require("../models/productModel");
 
