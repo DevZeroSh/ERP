@@ -48,7 +48,7 @@ exports.getRole = asyncHandler(async (req, res, next) => {
   }
 
   const role = await rolesModel
-    .findById({ _id: id, companyId })
+    .findById({ _id: req.params.id, companyId })
     .populate({ path: "rolesDashboard", select: "title _id" });
   if (!role) {
     return next(new ApiError(`No Role for this id ${id}`, 404));

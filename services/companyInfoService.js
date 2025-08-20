@@ -1179,15 +1179,13 @@ exports.getCompanyInfo = asyncHandler(async (req, res, next) => {
 
   const companyInfos = await CompanyInfnoModel.findOne({ _id: companyId });
   const currency = await currencyModel.findOne({ is_primary: true, companyId });
-  console.log(companyInfos);
 
   res.status(200).json({ status: "true", data: companyInfos, currency });
 });
 
 exports.updataCompanyInfo = asyncHandler(async (req, res, next) => {
   try {
-    const { id } = req.params;
-
+    const { id } = req.params;    
     const companyInfo = await CompanyInfnoModel.findByIdAndUpdate(
       { _id: id },
       {
