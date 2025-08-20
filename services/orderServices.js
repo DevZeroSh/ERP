@@ -255,14 +255,15 @@ exports.DashBordSalse = asyncHandler(async (req, res, next) => {
       if (t > 0) {
         total = t;
         customars.TotalUnpaid = Number(t);
-      } else if (t < 0) {
-        customars.TotalUnpaid = t;
-        req.body.paymentsStatus = "paid";
-      } else {
-        total = 0;
-        customars.TotalUnpaid = 0;
-        req.body.paymentsStatus = "paid";
-      }
+      } // } else if (t < 0) {
+      //   customars.TotalUnpaid = t;
+      //   req.body.paymentsStatus = "paid";
+      //   req.body.totalRemainder
+      // } else {
+      //   total = 0;
+      //   customars.TotalUnpaid = 0;
+      //   req.body.paymentsStatus = "paid";
+      // }
     } else {
       customars.TotalUnpaid += total;
     }
@@ -1412,12 +1413,11 @@ exports.canceledOrder = asyncHandler(async (req, res, next) => {
 exports.mergeReceipts = asyncHandler(async (req, res, next) => {
   const companyId = req.query.companyId;
   const { startDate, endDate, id } = req.body;
-  
+
   if (!companyId) {
     return res.status(400).json({ message: "companyId is required" });
   }
-  const nextCounter =
-    (await orderModel.countDocuments({ companyId })) + 1;
+  const nextCounter = (await orderModel.countDocuments({ companyId })) + 1;
   const salesPoints = await salesPointModel
     .findOne({ _id: id, companyId })
     .populate("salesPointCurrency");
@@ -1529,8 +1529,6 @@ exports.mergeReceipts = asyncHandler(async (req, res, next) => {
 
   const aggregatedFunds = Array.from(financialFundsMap.values());
   const taxSummary = Array.from(taxSummaryMap.values());
-
-
 
   const newOrderData = {
     invoicesItems: cartItems,
