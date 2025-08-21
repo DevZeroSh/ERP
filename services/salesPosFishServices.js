@@ -834,7 +834,7 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
   const nextCounterRefund =
     (await refundPosSales.countDocuments({ companyId })) + 1;
   req.body.counter = nextCounterRefund;
-
+  req.body.salesPoint = orders.salesPoint;
   const order = await refundPosSales.create(req.body);
 
   const bulkUpdateOptions = req.body.cartItems.map((item) => ({
@@ -1128,12 +1128,37 @@ exports.getReceiptForDate = asyncHandler(async (req, res, next) => {
 
   const { id } = req.params;
 
-  const orders = await posReceiptsModel.find({
-    createdAt: { $gte: specificDateString },
-    type: "pos",
-    salesPoint: id,
-    companyId,
+  const orders = await posReceiptsModel
+    .find({
+      createdAt: { $gte: specificDateString },
+      type: "pos",
+      salesPoint: id,
+      companyId,
+    })
+    .sort({ createdAt: -1 });
+
+  res.status(200).json({
+    data: orders,
   });
+});
+
+exports.getRefundReceiptForDate = asyncHandler(async (req, res, next) => {
+  const companyId = req.query.companyId;
+
+  if (!companyId) {
+    return res.status(400).json({ message: "companyId is required" });
+  }
+  const specificDate = new Date().toISOString().slice(0, 10);
+  const specificDateString = specificDate;
+
+  const { id } = req.params;
+
+  const orders = await refundPosSales
+    .find({
+      createdAt: { $gte: specificDateString },
+      companyId,
+    })
+    .sort({ createdAt: -1 });
 
   res.status(200).json({
     data: orders,
