@@ -115,6 +115,7 @@ const orderFishSchema = new mongoose.Schema(
       exchangeRate: String,
       _id: false,
     },
+    isRefund: { type: Boolean, default: false },
     paymentsStatus: { type: String, default: "paid" },
     exchangeRate: Number,
     invoiceName: String,

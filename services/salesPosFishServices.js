@@ -884,6 +884,7 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
             update: {
               $set: {
                 [`returnCartItem.${matchingIndex}.soldQuantity`]: newQuantity,
+                isRefund: true,
               },
             },
           },
@@ -1038,9 +1039,12 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
 
   const { id } = req.params;
   const { stockId } = req.body;
-  const canceled = await posReceiptsModel.findOne({ _id: id });
+  const canceled = await posReceiptsModel.findOne({
+    _id: id,
+    companyId,
+  });
 
-  if (canceled.type !== "cancel") {
+  if (canceled.type !== "cancel" && canceled.isRefund !== true) {
     if (canceled.financialFund && canceled.financialFund.length > 0) {
       for (const fundId of canceled.financialFund) {
         const financialFund = await FinancialFundsModel.findOne({
@@ -1111,7 +1115,7 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
   } else {
     res.status(400).json({
       status: "faild",
-      message: "The type is cancel",
+      message: "The type is cancel or Have Refund",
     });
   }
 });
