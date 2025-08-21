@@ -271,7 +271,7 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
           0,
           "movement",
           "out",
-          "sales",
+          "POS Receipt",
           companyId
         );
       }
@@ -1027,9 +1027,14 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
     return res.status(400).json({ message: "companyId is required" });
   }
   req.body.employee = req.user.name;
-  const currentDateTime = new Date().toLocaleString("en-US", {
-    timeZone: "Europe/Istanbul",
-  });
+  const padZero = (value) => (value < 10 ? `0${value}` : value);
+  const ts = Date.now();
+  const date_ob = new Date(ts);
+  const date = `${date_ob.getFullYear()}-${padZero(
+    date_ob.getMonth() + 1
+  )}-${padZero(date_ob.getDate())}T${padZero(date_ob.getHours())}:${padZero(
+    date_ob.getMinutes()
+  )}:${padZero(date_ob.getSeconds())}`;
 
   const { id } = req.params;
   const { stockId } = req.body;
@@ -1046,7 +1051,7 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
         await financialFund.save();
 
         await ReportsFinancialFundsModel.create({
-          date: currentDateTime,
+          date: date,
           amount: fundId.allocatedAmount,
           ref: canceled._id,
           type: "cancel",
@@ -1091,19 +1096,13 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
       { _id: id, companyId },
       {
         type: "cancel",
-        date: currentDateTime,
+        date: date,
         counter: "cancel " + canceled.counter,
       },
       { new: true }
     );
 
-    createInvoiceHistory(
-      companyId,
-      id,
-      "cancel",
-      req.user._id,
-      currentDateTime
-    );
+    createInvoiceHistory(companyId, id, "cancel", req.user._id, date);
     res.status(200).json({
       status: "success",
       message: "The order has been canceled",
