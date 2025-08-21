@@ -35,6 +35,6 @@ SalesPosRout.route("/refund_pos_receipt/:id").get(getOneReturnPosSales);
 SalesPosRout.route("/canceled_receipt/:id").put(canceledPosSales);
 SalesPosRout.route("/:id").get(findOneSalsePos).put(editPosOrder);
 SalesPosRout.route("/dailyreceipt/:id").get(getReceiptForDate);
-SalesPosRout.route("/dailyrefundreceipt").get(getRefundReceiptForDate);
+SalesPosRout.route("/dailyrefundreceipt/:id").get(getRefundReceiptForDate);
 
 module.exports = SalesPosRout;
