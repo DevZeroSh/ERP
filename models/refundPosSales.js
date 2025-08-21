@@ -102,6 +102,7 @@ const refundPosSalesSchema = new mongoose.Schema(
       type: String,
       default: 0,
     },
+    receipt: String,
     stock: { type: mongoose.Schema.ObjectId, ref: "Stock" },
     sync: { type: Boolean, default: false },
     companyId: {

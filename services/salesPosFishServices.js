@@ -835,6 +835,7 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
     (await refundPosSales.countDocuments({ companyId })) + 1;
   req.body.counter = nextCounterRefund;
   req.body.salesPoint = orders.salesPoint;
+  req.body.receipt = orders.counter;
   const order = await refundPosSales.create(req.body);
 
   const bulkUpdateOptions = req.body.cartItems.map((item) => ({
