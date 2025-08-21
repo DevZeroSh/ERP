@@ -237,17 +237,25 @@ exports.createPurchaseInvoice = asyncHandler(async (req, res, next) => {
     financailFund,
     tag,
     currency;
-  supllierObject = JSON.parse(req.body.supllierObject);
+  supllierObject = req.body.supllierObject
+    ? JSON.parse(req.body.supllierObject)
+    : "";
+  taxDetails = req.body.taxDetails ? JSON.parse(req.body.taxDetails) : "";
+  invoicesItem = req.body.invoicesItems
+    ? JSON.parse(req.body.invoicesItems)
+    : "";
+  currency = req.body.currency ? JSON.parse(req.body.currency) : "";
+  tag = req.body.tag ? JSON.parse(req.body.tag) : "";
 
-  taxDetails = JSON.parse(req.body.taxDetails);
-  invoicesItem = JSON.parse(req.body.invoicesItems);
-  currency = JSON.parse(req.body.currency);
-  tag = JSON.parse(req.body.tag);
-  supplier = await suppliersModel.findById(supllierObject.id);
+  supplier = await suppliersModel.findOne({
+    _id: supllierObject.id,
+    companyId,
+  });
 
   const productQRCodes = invoicesItem.map((item) => item.qr);
   const products = await productModel.find({
     qr: { $in: productQRCodes },
+    companyId,
   });
 
   // Create a map for quick product lookups by QR code

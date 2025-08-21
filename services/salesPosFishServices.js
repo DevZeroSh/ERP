@@ -44,6 +44,32 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
   const cartItems = req.body.cartItems;
   req.body.date = date;
 
+  const now = new Date();
+
+  // نزود ثانية
+  now.setSeconds(now.getSeconds() + 1);
+
+  const formatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Istanbul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(now);
+  const dateParts = {};
+  parts.forEach(({ type, value }) => {
+    dateParts[type] = value;
+  });
+
+  const dateTurkey = `${dateParts.year}-${dateParts.month}-${dateParts.day}T${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
+
+  dateTurkey;
+
   if (!cartItems || cartItems.length === 0) {
     return next(new ApiError("The cart is empty", 400));
   }
@@ -154,12 +180,18 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
 
       const updatedFundBalance =
         parseFloat(financialFund.fundBalance) +
-        parseFloat(allocatedAmount || 0);
+        parseFloat(allocatedAmount || 0) -
+        parseFloat(req.body.change || 0);
 
       bulkUpdates.push({
         updateOne: {
           filter: { _id: fundId, companyId },
-          update: { $inc: { fundBalance: parseFloat(allocatedAmount) } },
+          update: {
+            $inc: {
+              fundBalance:
+                parseFloat(allocatedAmount) - parseFloat(req.body.change || 0),
+            },
+          },
         },
       });
 
@@ -176,7 +208,21 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
         payment: null,
         companyId,
       });
-
+      if (req.body.change > 0) {
+        await ReportsFinancialFundsModel.create({
+          date: dateTurkey,
+          amount: parseFloat(req.body.change || 0),
+          exchangeAmount: req.body.change,
+          ref: order._id,
+          type: "POS-Remaining",
+          financialFundId: fundId,
+          financialFundRest: updatedFundBalance,
+          exchangeRate,
+          paymentType: "Withdrawal",
+          payment: null,
+          companyId,
+        });
+      }
       financialFundsMap[fundId] = financialFund;
     });
 

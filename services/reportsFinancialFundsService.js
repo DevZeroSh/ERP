@@ -80,6 +80,7 @@ exports.getSpecificReports = asyncHandler(async (req, res, next) => {
       "Withdrawal transfer",
       "Salary",
       "refund-POS-Receipts",
+      "POS-Remaining",
     ].includes(report.type);
 
     runningBalance += isNegative ? -amount : amount;
