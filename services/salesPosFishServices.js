@@ -1149,8 +1149,8 @@ console.log(funds);
     const stableFundBalance = balancesMap[fund._id.toString()] || 0;
     return {
       ...fund.toObject(),
-      stableFundBalance, //yesterday
-      todayBalance: fund.fundBalance - stableFundBalance,
+      stableFundBalance:fund.fundBalance - stableFundBalance, //yesterday
+      todayBalance: stableFundBalance,
     };
   });
 
