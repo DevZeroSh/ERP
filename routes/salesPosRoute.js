@@ -25,10 +25,9 @@ SalesPosRout.use(authService.protect);
 
 // SalesPosRout.route("/salespos").get(findAllSalesPos);
 SalesPosRout.route("/").get(findAllSalsePos).post(createCashOrder);
-// SalesPosRout.route("/funds").post(createCashOrderMultipelFunds);
 SalesPosRout.route("/salespoint/:id").get(findAllSalsePosForSalsePoint);
 SalesPosRout.route("/refund_pos_receipt")
-  .post( )
+  .post(returnPosSales)
   .get(getReturnPosSales);
 SalesPosRout.route("/merge").post(mergeRefundReceipts);
 SalesPosRout.route("/funds/:id").get(fundAndReportsInPOS);
