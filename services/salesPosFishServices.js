@@ -65,8 +65,9 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
   parts.forEach(({ type, value }) => {
     dateParts[type] = value;
   });
+  const milliseconds = now.getMilliseconds().toString().padStart(3, "0");
 
-  const dateTurkey = `${dateParts.year}-${dateParts.month}-${dateParts.day}T${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
+  const dateTurkey = `${dateParts.year}-${dateParts.month}-${dateParts.day}T${dateParts.hour}:${dateParts.minute}:${dateParts.second}.${milliseconds}Z`;
 
   dateTurkey;
 
