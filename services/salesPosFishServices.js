@@ -1128,29 +1128,53 @@ exports.fundAndReportsInPOS = asyncHandler(async (req, res, next) => {
           $in: funds.map((id) => new mongoose.Types.ObjectId(id)),
         },
         createdAt: { $gte: startOfToday, $lte: endOfToday },
+        type: { $in: ["POS-Receipts", "POS-Remaining", "refund-POS-Receipts"] },
       },
     },
     {
       $group: {
         _id: "$financialFundId",
-        total: { $sum: "$amount" },
+        totalPositive: {
+          $sum: {
+            $cond: [{ $eq: ["$type", "POS-Receipts"] }, "$amount", 0],
+          },
+        },
+        totalNegative: {
+          $sum: {
+            $cond: [
+              { $in: ["$type", ["POS-Remaining", "refund-POS-Receipts"]] },
+              "$amount",
+              0,
+            ],
+          },
+        },
       },
     },
   ]);
 
   // تحويل ل map
+  // أولاً نحول الـbalances ل map حسب fundId
   const balancesMap = balances.reduce((acc, b) => {
-    acc[b._id.toString()] = b.total;
+    acc[b._id.toString()] = {
+      totalPositive: b.totalPositive || 0,
+      totalNegative: b.totalNegative || 0,
+    };
     return acc;
   }, {});
-console.log(funds);
 
   const fundsWithBalances = funds.map((fund) => {
-    const stableFundBalance = balancesMap[fund._id.toString()] || 0;
+    const balance = balancesMap[fund._id.toString()] || {
+      totalPositive: 0,
+      totalNegative: 0,
+    };
+
+    const todayBalance = balance.totalPositive - balance.totalNegative;
+    const stableFundBalance = fund.fundBalance - todayBalance; // yesterday
+
     return {
       ...fund.toObject(),
-      stableFundBalance:fund.fundBalance - stableFundBalance, //yesterday
-      todayBalance: stableFundBalance,
+      stableFundBalance,
+      todayBalance,
     };
   });
 
