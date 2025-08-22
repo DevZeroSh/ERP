@@ -14,6 +14,7 @@ const {
   getReceiptForDate,
   mergeRefundReceipts,
   getRefundReceiptForDate,
+  fundAndReportsInPOS,
 } = require("../services/salesPosFishServices");
 
 const SalesPosRout = express.Router();
@@ -27,10 +28,10 @@ SalesPosRout.route("/").get(findAllSalsePos).post(createCashOrder);
 // SalesPosRout.route("/funds").post(createCashOrderMultipelFunds);
 SalesPosRout.route("/salespoint/:id").get(findAllSalsePosForSalsePoint);
 SalesPosRout.route("/refund_pos_receipt")
-  .post(returnPosSales)
+  .post( )
   .get(getReturnPosSales);
 SalesPosRout.route("/merge").post(mergeRefundReceipts);
-
+SalesPosRout.route("/funds/:id").get(fundAndReportsInPOS);
 SalesPosRout.route("/refund_pos_receipt/:id").get(getOneReturnPosSales);
 SalesPosRout.route("/canceled_receipt/:id").put(canceledPosSales);
 SalesPosRout.route("/:id").get(findOneSalsePos).put(editPosOrder);
