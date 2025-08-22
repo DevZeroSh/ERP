@@ -40,7 +40,7 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
     date_ob.getMonth() + 1
   )}-${padZero(date_ob.getDate())}T${padZero(date_ob.getHours())}:${padZero(
     date_ob.getMinutes()
-  )}:${padZero(date_ob.getSeconds())}`;
+  )}:${padZero(date_ob.getSeconds())}.${date_ob.getMilliseconds()}Z`;
   const cartItems = req.body.cartItems;
   req.body.date = date;
 
@@ -1111,20 +1111,23 @@ exports.fundAndReportsInPOS = asyncHandler(async (req, res, next) => {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
+  const endOfToday = new Date();
+  endOfToday.setHours(23, 59, 59, 999);
   const fundIds = sales.funds.map((f) => f.id);
 
   const funds = await FinancialFundsModel.find({
     _id: { $in: fundIds },
     companyId,
   });
+
   const balances = await ReportsFinancialFundsModel.aggregate([
     {
       $match: {
         companyId,
         financialFundId: {
-          $in: fundIds.map((id) => new mongoose.Types.ObjectId(id)),
+          $in: funds.map((id) => new mongoose.Types.ObjectId(id)),
         },
-        date: { $lt: startOfToday },
+        createdAt: { $gte: startOfToday, $lte: endOfToday },
       },
     },
     {
@@ -1140,6 +1143,7 @@ exports.fundAndReportsInPOS = asyncHandler(async (req, res, next) => {
     acc[b._id.toString()] = b.total;
     return acc;
   }, {});
+console.log(funds);
 
   const fundsWithBalances = funds.map((fund) => {
     const stableFundBalance = balancesMap[fund._id.toString()] || 0;
