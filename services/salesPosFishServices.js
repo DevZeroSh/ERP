@@ -1020,8 +1020,8 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
         }
       }
     }
-    if (order.financailFund) {
-      for (const item of order.financailFund) {
+    if (order.financialFund) {
+      for (const item of order.financialFund) {
         try {
           if (financialFundsMap.has(item.fundId)) {
             const fundData = financialFundsMap.get(item.fundId);
@@ -1076,7 +1076,7 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
     },
     exchangeRate: 1,
     receipts: fish,
-    financailFund: aggregatedFunds,
+    financialFund: aggregatedFunds,
     manuallInvoiceDiscountValue: 0,
     manuallInvoiceDiscount: 0,
     taxSummary: taxSummary,
@@ -1119,7 +1119,7 @@ exports.fundAndReportsInPOS = asyncHandler(async (req, res, next) => {
   const funds = await FinancialFundsModel.find({
     _id: { $in: fundIds },
     companyId,
-  });
+  }).populate("fundCurrency");
 
   const balances = await ReportsFinancialFundsModel.aggregate([
     {
