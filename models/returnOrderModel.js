@@ -40,16 +40,29 @@ const returnOrderSchema = new mongoose.Schema(
         _id: false,
       },
     ],
-    financailFund: {
-      currency: String,
-      currencyID: String,
-      exchangeRate: String,
-      label: String,
-      value: String,
-      _id: false,
-    },
+    financailFund: [
+      {
+        currency: String,
+        currencyID: String,
+        exchangeRate: String,
+        currencyCode: String,
+        fundName: String,
+        id: String,
+        allocatedAmount: Number,
+
+        accountId: String,
+        _id: false,
+      },
+    ],
+
     taxSummary: [
-      { taxRate: Number, totalTaxValue: Number, discountTaxValue: Number },
+      {
+        taxRate: Number,
+        totalTaxValue: Number,
+        discountTaxValue: Number,
+        taxId: String,
+        _id: false,
+      },
     ],
     invoiceRef: String,
     counter: {
@@ -70,7 +83,7 @@ const returnOrderSchema = new mongoose.Schema(
     },
     currency: {
       id: String,
-      name: String,
+      currencyName: String,
       currencyCode: String,
       exchangeRate: String,
     },

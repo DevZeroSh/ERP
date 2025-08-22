@@ -6,6 +6,7 @@ const refundPosSalesSchema = new mongoose.Schema(
     financailFund: [
       {
         currency: String,
+        currencyCode: String,
         currencyID: String,
         exchangeRate: String,
         fundName: String,
@@ -110,6 +111,7 @@ const refundPosSalesSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    merged: { type: Boolean, default: false },
   },
 
   { timestamps: true }

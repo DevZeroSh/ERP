@@ -580,7 +580,7 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
     return res.status(400).json({ message: "companyId is required" });
   }
   req.body.companyId = companyId;
-  const financialFundsId = req.body.financialFund.id;
+  const financialFundsId = req.body.financailFund.id;
   const financialFunds = await FinancialFundsModel.findOne({
     _id: financialFundsId,
   });
@@ -1020,8 +1020,8 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
         }
       }
     }
-    if (order.financialFund) {
-      for (const item of order.financialFund) {
+    if (order.financailFund) {
+      for (const item of order.financailFund) {
         try {
           if (financialFundsMap.has(item.fundId)) {
             const fundData = financialFundsMap.get(item.fundId);
@@ -1058,6 +1058,7 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
 
   const aggregatedFunds = Array.from(financialFundsMap.values());
   const taxSummary = Array.from(taxSummaryMap.values());
+console.log(aggregatedFunds);
 
   const newOrderData = {
     invoicesItems: cartItems,
@@ -1076,7 +1077,7 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
     },
     exchangeRate: 1,
     receipts: fish,
-    financialFund: aggregatedFunds,
+    financailFund: aggregatedFunds,
     manuallInvoiceDiscountValue: 0,
     manuallInvoiceDiscount: 0,
     taxSummary: taxSummary,
