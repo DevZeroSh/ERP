@@ -4,10 +4,9 @@ const mongoose = require("mongoose");
 const productModel = require("../models/productModel");
 const FinancialFundsModel = require("../models/financialFundsModel");
 const ReportsFinancialFundsModel = require("../models/reportsFinancialFunds");
-const emoloyeeShcema = require("../models/employeeModel");
+
 const { createInvoiceHistory } = require("./invoiceHistoryService");
 const { createProductMovement } = require("../utils/productMovement");
-const currencySchema = require("../models/currencyModel");
 const customersModel = require("../models/customarModel");
 
 const posReceiptsModel = require("../models/orderModelFish");
@@ -752,8 +751,9 @@ exports.getReturnPosSales = asyncHandler(async (req, res, next) => {
       ],
     };
   }
-  let mongooseQuery = refundPosSales.find(query);
-
+  let mongooseQuery = refundPosSales
+    .find(query)
+    .populate({ path: "salesPoint" });
   // Apply sorting
   mongooseQuery = mongooseQuery.sort({ createdAt: -1 });
 
@@ -931,6 +931,7 @@ exports.getRefundReceiptForDate = asyncHandler(async (req, res, next) => {
     .find({
       createdAt: { $gte: specificDateString },
       companyId,
+      salesPoint: id,
     })
     .sort({ createdAt: -1 });
 
@@ -1058,7 +1059,7 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
 
   const aggregatedFunds = Array.from(financialFundsMap.values());
   const taxSummary = Array.from(taxSummaryMap.values());
-console.log(aggregatedFunds);
+  console.log(aggregatedFunds);
 
   const newOrderData = {
     invoicesItems: cartItems,
