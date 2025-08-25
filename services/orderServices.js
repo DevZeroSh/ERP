@@ -1430,6 +1430,7 @@ exports.mergeReceipts = asyncHandler(async (req, res, next) => {
     type: "pos",
     salesPoint: id,
     companyId,
+    merged: { $ne: true },
   });
 
   const cartItems = [];
@@ -1464,6 +1465,8 @@ exports.mergeReceipts = asyncHandler(async (req, res, next) => {
       });
 
       fish.push(order.counter);
+      order.merged = true;
+      await order.save();
     }
     totalInMainCurrency += order.totalInMainCurrency;
     invoiceGrandTotal += order.invoiceGrandTotal;

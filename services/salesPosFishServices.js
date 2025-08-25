@@ -960,6 +960,9 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
     },
     type: "Refund Pos",
     companyId,
+    salesPoint: id,
+    merged: { $ne: true },
+
   });
 
   const cartItems = [];
@@ -994,6 +997,8 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
       });
 
       fish.push(order.counter);
+      order.merged = true;
+      await order.save();
     }
     totalInMainCurrency += order.totalInMainCurrency;
     invoiceGrandTotal += order.invoiceGrandTotal;
