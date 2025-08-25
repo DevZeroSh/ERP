@@ -1525,7 +1525,7 @@ exports.mergeReceipts = asyncHandler(async (req, res, next) => {
     date_ob.getMonth() + 1
   )}-${padZero(date_ob.getDate())}T${padZero(date_ob.getHours())}:${padZero(
     date_ob.getMinutes()
-  )}:${padZero(date_ob.getSeconds())}`;
+  )}:${padZero(date_ob.getSeconds())}.${date_ob.getMilliseconds()}Z`;
 
   const aggregatedFunds = Array.from(financialFundsMap.values());
   const taxSummary = Array.from(taxSummaryMap.values());
