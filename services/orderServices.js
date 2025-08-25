@@ -1541,6 +1541,7 @@ exports.mergeReceipts = asyncHandler(async (req, res, next) => {
     totalInMainCurrency: totalInMainCurrency,
     counter: nextCounter,
     paymentsStatus: "paid",
+    invoiceName: `Post-Merged-${nextCounter}`,
     currency: {
       id: salesPoints.salesPointCurrency._id,
       currencyCode: salesPoints.salesPointCurrency.currencyCode,

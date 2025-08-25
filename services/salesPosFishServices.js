@@ -1073,6 +1073,7 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
     totalInMainCurrency: totalInMainCurrency,
     counter: nextCounter,
     paymentsStatus: "paid",
+    invoiceName: `Refund Receipt ${nextCounter}`,
     currency: {
       id: salesPoints.salesPointCurrency._id,
       currencyCode: salesPoints.salesPointCurrency.currencyCode,
