@@ -176,6 +176,8 @@ exports.getOneAccountAndJournal = asyncHandler(async (req, res, next) => {
       return res.status(400).json({ message: "companyId is required" });
     }
     const { id } = req.params;
+    const filters = req.query?.filters ? JSON.parse(req.query?.filters) : {};
+
     let query = { "journalAccounts.id": id, companyId };
     const pageSize = parseInt(req.query.limit) || 10;
     const page = parseInt(req.query.page) || 1;
@@ -197,6 +199,15 @@ exports.getOneAccountAndJournal = asyncHandler(async (req, res, next) => {
     const totalItems = await journalModel.countDocuments(query);
 
     const totalPages = Math.ceil(totalItems / pageSize);
+    if (filters?.startDate || filters?.endDate) {
+      query.journalDate = {};
+      if (filters?.startDate) {
+        query.journalDate.$gte = `${filters.startDate}T00:00:00.000Z`;
+      }
+      if (filters?.endDate) {
+        query.journalDate.$lte = `${filters.endDate}T23:59:59.999Z`;
+      }
+    }
 
     const allJournals = await journalModel.find(query);
 
@@ -372,7 +383,7 @@ exports.updateJournalForInvoice = asyncHandler(async (req, res, next) => {
     .filter((item) => item.id)
     .map((item) => ({
       updateOne: {
-        filter: { _id: (item.id), companyId },
+        filter: { _id: item.id, companyId },
         update: {
           $inc: {
             debtor: -item.MainDebit || 0,
