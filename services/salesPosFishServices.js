@@ -208,7 +208,7 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
         payment: null,
         companyId,
       });
-      if (req.body.change > 0) {
+      if (req.body.change > 0.1 && fundsPromises.length === 1) {
         await ReportsFinancialFundsModel.create({
           date: dateTurkey,
           amount: parseFloat(req.body.change || 0),
@@ -372,8 +372,10 @@ exports.findOneSalsePos = asyncHandler(async (req, res, next) => {
     // Check if the id is a number
     query = { counter: id };
   }
-  const order = await posReceiptsModel.findOne(query).populate("stock");
-
+  const order = await posReceiptsModel
+    .findOne(query)
+    .populate("stock")
+    .populate({ path: "salesPoint" });
   if (!order) {
     return next(new ApiError(`No order found for this id ${id}`, 404));
   }
@@ -785,7 +787,9 @@ exports.getOneReturnPosSales = asyncHandler(async (req, res, next) => {
   }
 
   const { id } = req.params;
-  const order = await refundPosSales.findOne({ _id: id, companyId });
+  const order = await refundPosSales
+    .findOne({ _id: id, companyId })
+    .populate({ path: "salesPoint" });
   if (!order) {
     return next(new ApiError(`No order for this id ${id}`, 404));
   }
@@ -962,7 +966,6 @@ exports.mergeRefundReceipts = asyncHandler(async (req, res, next) => {
     companyId,
     salesPoint: id,
     merged: { $ne: true },
-
   });
 
   const cartItems = [];

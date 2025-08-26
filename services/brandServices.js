@@ -61,7 +61,7 @@ exports.getBrands = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     status: "success",
     totalPages: totalPages,
-    results: brands.length,
+    results: totalItems,
     data: brands,
   });
 });
