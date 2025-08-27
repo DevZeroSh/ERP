@@ -67,6 +67,9 @@ const efaturaRoute = require("./efatura/efaturaRoute");
 const assetCategoryRoute = require("./assetCategoryRoute");
 const finalAsset = require("./finalAssetRoute");
 const assetCardRoute = require("./assetCardRoute");
+const investorRoute = require("./investorRoute");
+const investmentCompaniesRoute = require("./investmentCompaniesRoute");
+const investorSharesRoute = require("./investorSharesRoute");
 
 const mountRoutes = (app) => {
   app.use("/api/product", productRout);
@@ -153,5 +156,10 @@ const mountRoutes = (app) => {
   app.use("/api/recipe", recipeRoute);
   app.use("/api/manufactorProduct", manufactorProductRoute);
   app.use("/api/menu-category", menuCategoryRout);
+
+  //Investment
+  app.use("/api/investor", investorRoute);
+  app.use("/api/investmentCompanies", investmentCompaniesRoute);
+  app.use("/api/investorShares", investorSharesRoute);
 };
 module.exports = mountRoutes;
