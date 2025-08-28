@@ -208,7 +208,11 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
         payment: null,
         companyId,
       });
-      if (req.body.change > 0.1 && fundsPromises.length === 1) {
+      if (
+        req.body.change > 0.1 &&
+        fundsPromises.length === 1 &&
+        req.body.isMultFunds !== true
+      ) {
         await ReportsFinancialFundsModel.create({
           date: dateTurkey,
           amount: parseFloat(req.body.change || 0),
@@ -217,6 +221,24 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
           type: "POS-Remaining",
           financialFundId: fundId,
           financialFundRest: updatedFundBalance,
+          exchangeRate,
+          paymentType: "Withdrawal",
+          payment: null,
+          companyId,
+        });
+      } else if (
+        req.body.changeFund.changeInFundCurrency > 0.1 &&
+        req.body.changeFund.id === fundId &&
+        req.body.isMultFunds
+      ) {
+        await ReportsFinancialFundsModel.create({
+          date: dateTurkey,
+          amount: req.body.changeFund.changeInFundCurrency,
+          exchangeAmount: req.body.changeFund.changeInFundCurrency,
+          ref: order._id,
+          type: "POS-Remaining",
+          financialFundId: req.body.changeFund.id,
+          financialFundRest: req.body.changeFund.changeInFundCurrency || 0,
           exchangeRate,
           paymentType: "Withdrawal",
           payment: null,
