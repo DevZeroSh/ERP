@@ -826,12 +826,13 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
           _id: fundId.fundId,
           companyId,
         });
-        financialFund.fundBalance -= fundId.allocatedAmount;
+        financialFund.fundBalance -=
+          fundId.allocatedAmount - Number(canceled.change || 0);
         await financialFund.save();
 
         await ReportsFinancialFundsModel.create({
           date: date,
-          amount: fundId.allocatedAmount,
+          amount: fundId.allocatedAmount - Number(canceled.change || 0),
           ref: canceled._id,
           type: "cancel",
           financialFundId: financialFund._id,
