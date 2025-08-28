@@ -671,13 +671,23 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
         const newQuantity =
           orders.returnCartItem[matchingIndex].soldQuantity -
           incomingItem.soldQuantity;
-
+        const newtotal =
+          orders.returnCartItem[matchingIndex].total - incomingItem.total;
+        const newsubtotal =
+          orders.returnCartItem[matchingIndex].totalWithoutTax -
+          incomingItem.totalWithoutTax;
+        const newTaxValue =
+          orders.returnCartItem[matchingIndex].taxValue - incomingItem.taxValue;
         return {
           updateOne: {
             filter: { _id: orderId, companyId },
             update: {
               $set: {
                 [`returnCartItem.${matchingIndex}.soldQuantity`]: newQuantity,
+                [`returnCartItem.${matchingIndex}.total`]: newtotal,
+                [`returnCartItem.${matchingIndex}.totalWithoutTax`]:
+                  newsubtotal,
+                [`returnCartItem.${matchingIndex}.taxValue`]: newTaxValue,
                 isRefund: true,
               },
             },
