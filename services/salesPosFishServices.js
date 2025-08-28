@@ -620,7 +620,7 @@ exports.returnPosSales = asyncHandler(async (req, res, next) => {
     currentDateTime.getHours()
   )}:${padZero(currentDateTime.getMinutes())}:${padZero(
     currentDateTime.getSeconds()
-  )}`;
+  )}.${currentDateTime.getMilliseconds()}Z`;
 
   req.body.paidAt = formattedDate;
   req.body.employee = req.user.name;
