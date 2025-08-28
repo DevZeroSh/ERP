@@ -104,19 +104,25 @@ exports.createEmployee = asyncHandler(async (req, res, next) => {
     return res.status(400).json({ message: "companyId is required" });
   }
   req.body.companyId = companyId;
-  const findEmployee = await findOne({ email });
+  const findEmployee = await employeeModel.findOne({ email });
   let employee;
   //Check if the email format is true or not
   if (isEmail(email)) {
     //Generate Password
     const employeePass = generatePassword();
-    const company = await CompanyInfnoModel.findOne({ companyId });
+    const company = await CompanyInfnoModel.findById({ _id: companyId });
     req.body.tags = JSON.parse(req.body.tags);
     req.body.stocks = JSON.parse(req.body.stocks);
     req.body.expenseTags = JSON.parse(req.body.expenseTags);
     req.body.purchaseTags = JSON.parse(req.body.purchaseTags);
     req.body.salesTags = JSON.parse(req.body.salesTags);
-
+    req.body.company = [
+      {
+        companyId: companyId,
+        selectedRoles: req.body.selectedRoles,
+        companyName: company.companyName,
+      },
+    ];
     //Sned password to email
     if (!findEmployee) {
       req.body.password = await bcrypt.hash(employeePass, 12);
@@ -125,15 +131,21 @@ exports.createEmployee = asyncHandler(async (req, res, next) => {
         subject: "New Password",
         message: `Hello ${req.body.name}, Your password is ${employeePass}`,
       });
-    } else {
-      req.body.company = [
-        {
-          companyId: companyId,
-          selectedRoles: req.body.selectedRoles,
-          companyName: company.companyName,
-        },
-      ];
       employee = await employeeModel.create(req.body);
+    } else {
+      employee = await employeeModel.findByIdAndUpdate(
+        findEmployee._id,
+        {
+          $addToSet: {
+            company: {
+              companyId: companyId,
+              selectedRoles: req.body.selectedRoles,
+              companyName: company.companyName,
+            },
+          },
+        },
+        { new: true }
+      );
     }
     //Create the employee
 
