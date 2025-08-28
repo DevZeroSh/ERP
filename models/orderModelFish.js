@@ -13,6 +13,7 @@ const orderFishSchema = new mongoose.Schema(
         fundId: String,
         allocatedAmount: Number,
         accountId: String,
+        change: { type: Number, default: 0 },
         _id: false,
       },
     ],
