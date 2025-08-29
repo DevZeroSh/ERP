@@ -4,6 +4,7 @@ const shareTransactionSchema = require("../models/investorSharesModel");
 const { v4: uuidv4 } = require("uuid");
 const sharp = require("sharp");
 const { uploadMixOfImages } = require("../middlewares/uploadingImage");
+const investmentCompaniesModel = require("../models/investmentCompaniesModel");
 
 exports.uploadInvestorImages = uploadMixOfImages([
   { name: "passportImage", maxCount: 1 },
@@ -86,13 +87,32 @@ exports.getAllInvestors = asyncHandler(async (req, res, next) => {
 
     const skip = (page - 1) * limit;
 
-    const [investors, total] = await Promise.all([
+    const [investors, total, company] = await Promise.all([
       Investor.find(query).sort(sort).skip(skip).limit(parseInt(limit)),
 
       Investor.countDocuments(query),
+      investmentCompaniesModel.findOne({ companyId }),
     ]);
 
+    if (!company) {
+      return res.status(404).json({
+        status: false,
+        message: "Company not found",
+      });
+    }
+
     const totalPages = Math.ceil(total / limit);
+
+    const investorsList = investors.map((inv) => {
+      const ownershipPercentage = company.totalShares
+        ? ((inv.ownedShares || 0) / company.totalShares) * 100
+        : 0;
+
+      return {
+        ...inv.toObject(),
+        ownershipPercentage,
+      };
+    });
 
     res.status(200).json({
       status: true,
@@ -105,7 +125,7 @@ exports.getAllInvestors = asyncHandler(async (req, res, next) => {
         hasNextPage: page < totalPages,
         hasPreviousPage: page > 1,
       },
-      data: investors,
+      data: investorsList,
     });
   } catch (error) {
     console.error(`error while fetching investors data: ${error.message}`);
@@ -136,10 +156,48 @@ exports.getOneInvestor = asyncHandler(async (req, res, next) => {
       });
     }
 
+    const company = await investmentCompaniesModel.findOne({ companyId });
+    if (!company) {
+      return res.status(404).json({
+        status: false,
+        message: "Company not found",
+      });
+    }
+
+    const ownershipPercentage = company.totalShares
+      ? ((investor.ownedShares || 0) / company.totalShares) * 100
+      : 0;
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalTransactions = await shareTransactionSchema.countDocuments({
+      companyId,
+      investorId: req.params.id,
+    });
+
+    const transactions = await shareTransactionSchema
+      .find({ companyId, investorId: req.params.id })
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .populate("counterpartyId", "fullName email");
+
     res.status(200).json({
       status: true,
       message: "success",
-      data: investor,
+      data: {
+        ...investor.toObject(),
+        ownershipPercentage: ownershipPercentage,
+      },
+      transactions: {
+        total: totalTransactions,
+        page,
+        limit,
+        totalPages: Math.ceil(totalTransactions / limit),
+        items: transactions,
+      },
     });
   } catch (error) {
     console.error(`Error fetching investor: ${error.message}`);
@@ -155,7 +213,7 @@ exports.getOneInvestor = asyncHandler(async (req, res, next) => {
 // @access Private
 exports.updateInvestorShares = asyncHandler(async (req, res, next) => {
   const companyId = req.query.companyId;
-  const { shares, type } = req.body; // type: "buy" | "sell"
+  const { shares, type, counterpartyId, sharePrice } = req.body;
 
   if (!companyId) {
     return res
@@ -169,47 +227,99 @@ exports.updateInvestorShares = asyncHandler(async (req, res, next) => {
       .json({ status: false, message: "Valid shares value is required" });
   }
 
+  if (!sharePrice || isNaN(sharePrice) || sharePrice <= 0) {
+    return res
+      .status(400)
+      .json({ status: false, message: "Valid share price value is required" });
+  }
+
   if (!["buy", "sell"].includes(type)) {
     return res
       .status(400)
       .json({ status: false, message: "Invalid transaction type" });
   }
 
-  try {
-    const investor = await Investor.findOne({ _id: req.params.id, companyId });
+  if (!counterpartyId) {
+    return res
+      .status(400)
+      .json({ status: false, message: "counterpartyId is required" });
+  }
 
-    if (!investor) {
+  try {
+    // Actor = the one performing the action (buyer if type="buy", seller if type="sell")
+    const actor = await Investor.findOne({ _id: req.params.id, companyId });
+    if (!actor) {
       return res
         .status(404)
-        .json({ status: false, message: "Investor not found" });
+        .json({ status: false, message: "Actor investor not found" });
     }
 
-    if (type === "sell" && investor.ownedShares < shares) {
-      return res
-        .status(400)
-        .json({ status: false, message: "Not enough shares to sell" });
-    }
-
-    // Update ownedShares
-    investor.ownedShares =
-      type === "buy"
-        ? investor.ownedShares + Number(shares)
-        : investor.ownedShares - Number(shares);
-
-    await investor.save();
-
-    // Record transaction
-    await shareTransactionSchema.create({
-      investorId: investor._id,
-      type,
-      shares: Number(shares),
+    // Counterparty = the other side of the trade
+    const counterparty = await Investor.findOne({
+      _id: counterpartyId,
       companyId,
     });
+    if (!counterparty) {
+      return res
+        .status(404)
+        .json({ status: false, message: "Counterparty investor not found" });
+    }
+
+    // Validate enough shares to sell
+    if (type === "buy") {
+      if (counterparty.ownedShares < shares) {
+        return res.status(400).json({
+          status: false,
+          message: "Counterparty does not have enough shares to sell",
+        });
+      }
+    } else if (type === "sell") {
+      if (actor.ownedShares < shares) {
+        return res
+          .status(400)
+          .json({ status: false, message: "Not enough shares to sell" });
+      }
+    }
+
+    // Perform trade
+    if (type === "buy") {
+      actor.ownedShares += Number(shares);
+      counterparty.ownedShares -= Number(shares);
+    } else {
+      actor.ownedShares -= Number(shares);
+      counterparty.ownedShares += Number(shares);
+    }
+
+    await actor.save();
+    await counterparty.save();
+
+    // Record both sides of transaction
+    const buyerId = type === "buy" ? actor._id : counterparty._id;
+    const sellerId = type === "sell" ? actor._id : counterparty._id;
+
+    await shareTransactionSchema.create([
+      {
+        investorId: buyerId,
+        counterpartyId: sellerId,
+        type: "buy",
+        shares: Number(shares),
+        sharePrice: Number(sharePrice),
+        companyId,
+      },
+      {
+        investorId: sellerId,
+        counterpartyId: buyerId,
+        type: "sell",
+        shares: Number(shares),
+        sharePrice: Number(sharePrice),
+        companyId,
+      },
+    ]);
 
     res.status(200).json({
       status: true,
-      message: "success",
-      data: investor,
+      message: "Trade completed successfully",
+      data: { actor, counterparty },
     });
   } catch (error) {
     console.error(`Error updating shares: ${error.message}`);

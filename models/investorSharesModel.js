@@ -7,8 +7,13 @@ const shareTransactionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "investors",
     },
+    counterpartyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "investors",
+    },
     type: String,
     shares: Number,
+    sharePrice: Number,
     companyId: String,
   },
   { timestamps: true }

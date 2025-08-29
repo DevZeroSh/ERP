@@ -1,5 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const investmentCompanies = require("../models/investmentCompaniesModel");
+const Investor = require("../models/investorModel");
+const shareTransactionSchema = require("../models/investorSharesModel");
 const { v4: uuidv4 } = require("uuid");
 const sharp = require("sharp");
 const { uploadSingleImage } = require("../middlewares/uploadingImage");
@@ -128,10 +130,17 @@ exports.updateInvestmentCompanies = asyncHandler(async (req, res, next) => {
 
   try {
     req.body.companyId = companyId;
+
+    // Update the company
     const updatedInvestmentCompanies =
       await investmentCompanies.findOneAndUpdate(
         { companyId, _id: req.params.id },
-        req.body,
+        {
+          totalShares: req.body.totalShares,
+          availableShares: req.body.availableShares,
+          sharePrice: req.body.sharePrice,
+          foundersArray: req.body.foundersArray,
+        },
         {
           new: true,
           runValidators: true,
@@ -143,6 +152,31 @@ exports.updateInvestmentCompanies = asyncHandler(async (req, res, next) => {
         status: false,
         message: "Investment company not found",
       });
+    }
+
+    // Update founders shares
+    if (req.body.foundersArray && req.body.foundersArray.length > 0) {
+      await Promise.all(
+        req.body.foundersArray.map(async (founder) => {
+          const { investorId, shares } = founder;
+
+          // Update investor shares
+          await Investor.findOneAndUpdate(
+            { companyId, _id: investorId },
+            { $set: { ownedShares: shares, isFounder: true } },
+            { new: true, upsert: false }
+          );
+
+          // Create a transaction record
+          await shareTransactionSchema.create({
+            investorId,
+            type: "buy",
+            shares: Number(shares),
+            sharePrice: Number(req.body.sharePrice),
+            companyId,
+          });
+        })
+      );
     }
 
     res.status(200).json({

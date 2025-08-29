@@ -22,6 +22,12 @@ const investmentCompaniesSchema = new mongoose.Schema(
     logo: String,
     website: String,
     status: String,
+    foundersArray: [
+      {
+        investorId: { type: mongoose.Schema.Types.ObjectId, ref: "investors" },
+        shares: Number,
+      },
+    ],
     isFeatured: { type: Boolean, default: false },
     companyId: String,
   },

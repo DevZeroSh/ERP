@@ -12,6 +12,7 @@ const investorSchema = new mongoose.Schema(
     passportImage: String,
     idCardImage: String,
     profileImage: String,
+    isFounder: { type: Boolean, default: false },
     ownedShares: { type: Number, default: 0 },
     companyId: String,
   },
@@ -29,9 +30,9 @@ const setImageURL = (doc) => {
   }
 };
 // findOne, findAll and update
-investorSchema.post("init", (doc) => {
-  setImageURL(doc);
-});
+// investorSchema.post("init", (doc) => {
+//   setImageURL(doc);
+// });
 
 // create
 investorSchema.post("save", (doc) => {
