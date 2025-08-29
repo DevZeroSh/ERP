@@ -349,6 +349,7 @@ exports.DashBordSalse = asyncHandler(async (req, res, next) => {
           tax: item.tax,
           totalWithoutTax: item.totalWithoutTax,
           total: item.total,
+          companyId,
         });
 
         return null;
