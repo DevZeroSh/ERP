@@ -881,7 +881,7 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
 
         await ReportsFinancialFundsModel.create({
           date: date,
-          amount: fundId.allocatedAmount - Number(canceled.change || 0),
+          amount: fundId.allocatedAmount - Number(fundId.change || 0),
           ref: canceled._id,
           type: "cancel",
           financialFundId: financialFund._id,
