@@ -876,7 +876,7 @@ exports.canceledPosSales = asyncHandler(async (req, res, next) => {
           companyId,
         });
         financialFund.fundBalance -=
-          fundId.allocatedAmount - Number(canceled.change || 0);
+          fundId.allocatedAmount - Number(fundId.change || 0);
         await financialFund.save();
 
         await ReportsFinancialFundsModel.create({
