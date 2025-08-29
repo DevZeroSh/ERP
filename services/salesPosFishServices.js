@@ -183,18 +183,35 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
         parseFloat(allocatedAmount || 0) -
         parseFloat(req.body.change || 0);
 
-      bulkUpdates.push({
-        updateOne: {
-          filter: { _id: fundId, companyId },
-          update: {
-            $inc: {
-              fundBalance:
-                parseFloat(allocatedAmount) - parseFloat(req.body.change || 0),
+      if (fundsPromises.length === 1 && req.body.isMultFunds !== true) {
+        bulkUpdates.push({
+          updateOne: {
+            filter: { _id: fundId, companyId },
+            update: {
+              $inc: {
+                fundBalance:
+                  parseFloat(allocatedAmount) -
+                  parseFloat(req.body.change || 0),
+              },
             },
           },
-        },
-      });
-
+        });
+      } else if (req.body.isMultFunds) {
+        bulkUpdates.push({
+          updateOne: {
+            filter: { _id: fundId, companyId },
+            update: {
+              $inc: {
+                fundBalance:
+                  parseFloat(allocatedAmount) -
+                  (req.body.changeFund.id === fundId
+                    ? parseFloat(req.body.changeFund.changeInFundCurrency || 0)
+                    : 0),
+              },
+            },
+          },
+        });
+      }
       await ReportsFinancialFundsModel.create({
         date: date,
         amount: parseFloat(allocatedAmount || 0),
