@@ -226,6 +226,7 @@ exports.createPurchaseInvoice = asyncHandler(async (req, res, next) => {
     subtotalWithDiscount,
     paymentDate,
     invoiceTax,
+    counter,
   } = req.body;
   const isopurchasDate = `${req.body.date}T${formattedDate}Z`;
   req.body.date = isopurchasDate;
@@ -303,7 +304,7 @@ exports.createPurchaseInvoice = asyncHandler(async (req, res, next) => {
       subtotalWithDiscount,
       paymentDate,
       invoiceTax,
-      counter: nextCounterPurchaseInvoices,
+      counter: counter + "" + nextCounterPurchaseInvoices,
       tag,
       journalCounter: req.body.journalCounter,
       type: "purchase",
@@ -326,9 +327,9 @@ exports.createPurchaseInvoice = asyncHandler(async (req, res, next) => {
       date: req.body.paymentDate || formattedDate,
       financialFundsName: financialFund.fundName,
       financialFundsId: financailFund.id,
-      invoiceNumber: invoiceNumber,
+      invoiceNumber: counter + "" + invoiceNumber,
       invoiceID: newPurchaseInvoice._id,
-      counter: nextCounterPayment,
+      counter: counter + "" + nextCounterPayment,
       description: req.body.paymentDescription,
       invoiceCurrencyCode: req.body.currency.currencyCode,
       paymentText: "Withdrawal",
@@ -442,7 +443,7 @@ exports.createPurchaseInvoice = asyncHandler(async (req, res, next) => {
       paymentDate,
       invoiceTax,
       tag,
-      counter: nextCounterPurchaseInvoices,
+      counter: counter + "" + nextCounterPurchaseInvoices,
       journalCounter: req.body.journalCounter,
       type: "purchase",
       dueDate: paymentDate,

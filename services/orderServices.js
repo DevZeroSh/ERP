@@ -133,7 +133,8 @@ exports.DashBordSalse = asyncHandler(async (req, res, next) => {
     .then((count) => count + 1);
 
   req.body.type = "sales";
-  req.body.counter = nextCounterOrder;
+  req.body.counters = req.body.counter;
+  req.body.counter = req.body.counter + "" + nextCounterOrder;
   const financailSources = req.body.financailSource;
   req.body.financailFund = req.body.financailSource;
   let financialFunds;
@@ -178,9 +179,9 @@ exports.DashBordSalse = asyncHandler(async (req, res, next) => {
       financialFundsName: financailSources.name,
       financialFundsId: financailSources.id,
       date: req.body.paymentDate || timeIsoString,
-      invoiceNumber: nextCounter,
+      invoiceNumber: req.body.counters + "" + nextCounter,
       invoiceID: order._id,
-      counter: nextCounterPayment,
+      counter: req.body.counters + "" + nextCounterPayment,
       description: req.body.paymentDescription,
       paymentInFundCurrency: req.body.paymentInFundCurrency,
       paymentCurrency: req.body.currency.currencyCode,

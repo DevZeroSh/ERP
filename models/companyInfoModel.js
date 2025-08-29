@@ -39,6 +39,8 @@ const companyIfnoSchema = new mongoose.Schema({
     receipts: { type: String, default: "ABC" },
   },
   sync: { type: Boolean, default: false },
+  transactionReferenceFormat: Boolean,
+  transactionReferenceExtra: String,
 });
 
 const setImageURL = (doc) => {

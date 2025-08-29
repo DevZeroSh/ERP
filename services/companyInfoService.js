@@ -393,6 +393,8 @@ exports.updataCompanyInfo = asyncHandler(async (req, res, next) => {
         linkedinUrl: req.body.linkedinUrl,
         emails: req.body.emails,
         prefix: req.body.prefix,
+        transactionReferenceFormat: req.body.transactionReferenceFormat,
+        transactionReferenceExtra: req.body.transactionReferenceExtra,
       },
       {
         new: true,
